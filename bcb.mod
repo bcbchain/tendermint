@@ -1,0 +1,1 @@
+genesis-smart-contract v0.0.1
