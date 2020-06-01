@@ -3,8 +3,8 @@ module github.com/bcbchain/tendermint
 go 1.14
 
 require (
-	github.com/bcbchain/bclib v0.0.4-0.20200527024559-5c33fe516d75
-	github.com/bcbchain/sdk v0.0.3
+	github.com/bcbchain/bclib v0.0.0-20200529124754-127c5783d369
+	github.com/bcbchain/sdk v0.0.0-20200529121232-bb3d3dc8a9d6
 	github.com/coreos/etcd v3.3.20+incompatible
 	github.com/ebuchman/fail-test v0.0.0-20170303061230-95f809107225
 	github.com/fortytw2/leaktest v1.3.0
