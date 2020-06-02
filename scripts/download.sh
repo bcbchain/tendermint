@@ -3,35 +3,51 @@ set -e
 
 # WARN: non hermetic build (people must run this script inside docker to
 # produce deterministic binaries).
-
+cd ..
 CONTRACT_DIR=./build/contract/
-GIT_RELEASE="https://github.com/bcbchain/contract/releases/download/"
-CONTRACT_GIT="https://api.github.com/repos/bcbchain/contract/tags"
-CONTRACT="genesis-smart-contract"
+PREFIX="https://"
+SUFFIX="/releases/download/"
 
 i=1
-for _ in $(cat bcb.mod)
+for _ in $(cat scripts/bcb.mod)
 do
   NUM=$i
-  TAG=$(awk 'NR=='$NUM' {print $1}' bcb.mod)
-  VER=$(awk 'NR=='$NUM' {print $2}' bcb.mod)
+  TAG=$(awk 'NR=='$NUM' {print $1}' scripts/bcb.mod)
+  VER=$(awk 'NR=='$NUM' {print $2}' scripts/bcb.mod)
 
-  if [ "$TAG" == "$CONTRACT" ];then
-    CONTRACT_LATEST_TAG=$VER
+  if [[ "$TAG" == "" ]];then
+    continue
   fi
 
-  if [ -n "$CONTRACT_LATEST_TAG" ];then
-    echo "==> Downloading contract to ${CONTRACT_DIR}..."
-    rm -rf "$CONTRACT_DIR"
-    mkdir -p "$CONTRACT_DIR"
-    pushd "$CONTRACT_DIR" >/dev/null
+  if [[ "$VER" == "go.mod" ]];then
+    ii=1
+    for _ in $(cat go.mod)
+    do
+      N=$ii
+      GTAG=$(awk 'NR=='$N' {print $1}' go.mod)
+      GVER=$(awk 'NR=='$N' {print $2}' go.mod)
 
-    curl -OL "${GIT_RELEASE}${CONTRACT_LATEST_TAG}/${CONTRACT}""_${CONTRACT_LATEST_TAG}.tar.gz"
-
-    tar -zxf "${CONTRACT}""_${CONTRACT_LATEST_TAG}.tar.gz"
-    rm -f "${CONTRACT}""_${CONTRACT_LATEST_TAG}.tar.gz"
-    popd >/dev/null
+      if [[ "$GTAG" == "$TAG" ]];then
+        VER="$GVER"
+        break
+      fi
+      : $(( ii++ ))
+    done
   fi
+
+  FILENAME="${TAG##*/}"
+  DOWNLOAD="$PREFIX$TAG$SUFFIX$VER/$FILENAME""_$VER.tar.gz"
+
+  echo "==> Downloading from ${DOWNLOAD}"
+  rm -rf "$CONTRACT_DIR"
+  mkdir -p "$CONTRACT_DIR"
+  pushd "$CONTRACT_DIR" >/dev/null
+
+  curl -OL "$DOWNLOAD"
+
+  tar -zxf "$FILENAME""_$VER.tar.gz"
+  rm -f "$FILENAME""_$VER.tar.gz"
+  popd >/dev/null
   : $(( i++ ))
 done
 
