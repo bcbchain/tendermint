@@ -1,5 +1,6 @@
 #!/bin/bash
 
+cd ..
 # Delete the old dir
 echo "==> Removing old directory..."
 rm -rf build/pkg
@@ -85,5 +86,3 @@ popd >/dev/null 2>&1
 echo
 echo "==> Results:"
 ls -hl ./build/dist
-
-exit 0

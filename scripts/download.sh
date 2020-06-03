@@ -36,7 +36,7 @@ do
   fi
 
   FILENAME="${TAG##*/}"
-  DOWNLOAD="$PREFIX$TAG$SUFFIX$VER/$FILENAME""_$VER.tar.gz"
+  DOWNLOAD="$PREFIX$TAG$SUFFIX${VER:1}/$FILENAME""_$VER.tar.gz"
 
   echo "==> Downloading from ${DOWNLOAD}"
   rm -rf "$CONTRACT_DIR"
@@ -51,4 +51,4 @@ do
   : $(( i++ ))
 done
 
-exit 0
+cd scripts
