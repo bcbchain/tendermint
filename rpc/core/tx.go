@@ -2,6 +2,7 @@ package core
 
 import (
 	"fmt"
+	"github.com/bcbchain/tendermint/version"
 	"github.com/pkg/errors"
 
 	"encoding/hex"
@@ -165,13 +166,28 @@ func Tx(hash string, prove bool) (*ctypes.ResultTx, error) {
 
 	}
 
+	//判断该交易hash是否存在数据库，即该交易是否commit
+	var blockcommitted bool
+
+	//获取当前区块高度
+	resInfo, err := proxyAppQuery.InfoSync(abci.RequestInfo{
+		Version: version.Version,
+	})
+	if err != nil {
+		blockcommitted = false
+	}
+	if dResult.Height <= resInfo.LastBlockHeight && dResult.Height != 0 {
+		blockcommitted = true
+	}
+
 	return &ctypes.ResultTx{
 		Hash:   string(hash),
 		Height: height,
 		//Index:    uint32(index),
-		DeliverResult: dResult,
-		CheckResult:   checkResult,
-		StateCode:     stateCode,
+		DeliverResult:  dResult,
+		CheckResult:    checkResult,
+		StateCode:      stateCode,
+		BlockCommitted: blockcommitted,
 	}, nil
 }
 

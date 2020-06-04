@@ -192,7 +192,7 @@ recheck_empty = {{ .Mempool.RecheckEmpty }}
 broadcast = {{ .Mempool.Broadcast }}
 wal_dir = "{{ .Mempool.WalPath }}"
 ctx_cache_time = {{ .Mempool.CTxCacheTime }}
-force_generate_block_switch = {{ .Mempool.ForceGenerateBlockSwitch }}
+force_interval_block_switch = {{ .Mempool.ForceIntervalBlockSwitch }}
 
 ##### consensus configuration options #####
 [consensus]

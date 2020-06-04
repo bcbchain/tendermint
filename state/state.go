@@ -1,9 +1,9 @@
 package state
 
 import (
-	"github.com/bcbchain/sdk/sdk/ibc"
 	"bytes"
 	"fmt"
+	"github.com/bcbchain/sdk/sdk/ibc"
 	"strconv"
 	"time"
 
@@ -230,13 +230,4 @@ func MakeGenesisState(genDoc *types.GenesisDoc) (State, error) {
 
 		LastAppHash: genDoc.AppHash,
 	}, nil
-}
-
-//------------------------------------------------------------------------
-// Modify tendermint config and configFile  by smart contract
-
-type SetTdmConfig struct {
-	CreateEmptyBlocks  bool `json:"create_empty_blocks"`
-	ForceGenerateBlock bool `json:"force_generate_block_interval"`
-	Interval           int  `json:"create_empty_blocks_interval"`
 }

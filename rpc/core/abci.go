@@ -107,10 +107,13 @@ func ABCIQueryEx(path string) (*ctypes.ResultABCIQueryEx, error) {
 // }
 // ```
 func ABCIInfo() (*ctypes.ResultABCIInfo, error) {
-	if completeStarted == false {
-		return nil, errors.New("service not ready")
-	}
+	//if completeStarted == false {
+	//	return nil, errors.New("service not ready")
+	//}
 
+	if proxyAppQuery == nil && proxyApp != nil {
+		proxyAppQuery = proxyApp.Query()
+	}
 	resInfo, err := proxyAppQuery.InfoSync(abci.RequestInfo{
 		Version: version.Version,
 	})

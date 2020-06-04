@@ -820,7 +820,6 @@ func (cs *ConsensusState) enterNewRound(height int64, round int) {
 	// Wait for txs to be available in the mempool
 	// before we enterPropose in round 0. If the last block changed the app hash,
 	// we may need an empty "proof" block, and enterPropose immediately.
-	//waitForTxs := cs.config.WaitForTxs() && round == 0 && !cs.needProofBlock(height)
 	waitForTxs := cs.config.WaitForTxs() && round == 0
 	if waitForTxs {
 		if cs.config.CreateEmptyBlocksInterval > 0 {

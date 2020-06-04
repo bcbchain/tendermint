@@ -372,7 +372,7 @@ type MempoolConfig struct {
 	WalPath                  string `mapstructure:"wal_dir"`
 	CacheSize                int    `mapstructure:"cache_size"`
 	CTxCacheTime             int64  `mapstructure:"ctx_cache_time"`
-	ForceGenerateBlockSwitch bool   `mapstructure:"force_generate_block_switch"`
+	ForceIntervalBlockSwitch bool   `mapstructure:"force_interval_block_switch"`
 }
 
 // DefaultMempoolConfig returns a default configuration for the Tendermint mempool
@@ -427,6 +427,7 @@ type ConsensusConfig struct {
 	MaxBlockSizeBytes int `mapstructure:"max_block_size_bytes"`
 
 	// EmptyBlocks mode and possible interval between empty blocks in seconds
+	ForceGenerateBlockSwitch  bool `mapstructure:"force_generate_block_switch"`
 	CreateEmptyBlocks         bool `mapstructure:"create_empty_blocks"`
 	CreateEmptyBlocksInterval int  `mapstructure:"create_empty_blocks_interval"`
 
@@ -451,6 +452,7 @@ func DefaultConsensusConfig() *ConsensusConfig {
 		MaxBlockSizeBytes:           1,
 		CreateEmptyBlocks:           true,
 		CreateEmptyBlocksInterval:   3,
+		ForceGenerateBlockSwitch:    false,
 		PeerGossipSleepDuration:     100,
 		PeerQueryMaj23SleepDuration: 2000,
 	}

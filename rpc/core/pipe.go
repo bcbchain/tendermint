@@ -42,6 +42,7 @@ type P2P interface {
 var (
 	// external, thread safe interfaces
 	proxyAppQuery proxy.AppConnQuery
+	proxyApp      proxy.AppConns
 
 	// interfaces defined in types and above
 	stateDB        dbm.DB
@@ -108,6 +109,10 @@ func SetAddrBook(book p2p.AddrBook) {
 
 func SetProxyAppQuery(appConn proxy.AppConnQuery) {
 	proxyAppQuery = appConn
+}
+
+func SetAppConns(appConns proxy.AppConns) {
+	proxyApp = appConns
 }
 
 func SetTxIndexer(indexer txindex.TxIndexer) {

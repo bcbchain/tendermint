@@ -13,10 +13,10 @@ import (
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 
-	cfg "github.com/bcbchain/tendermint/config"
 	"github.com/bcbchain/bclib/tendermint/tmlibs/cli"
 	tmflags "github.com/bcbchain/bclib/tendermint/tmlibs/cli/flags"
 	"github.com/bcbchain/bclib/tendermint/tmlibs/log"
+	cfg "github.com/bcbchain/tendermint/config"
 )
 
 var (
@@ -28,7 +28,7 @@ var (
 func init() {
 	registerFlagsRootCmd(RootCmd)
 	sidechain.ConfigPathFunc = GetConfigFiles
-	state.SetConfigFunc = SetTdmConfig
+	state.SetConfigFunc = SetConfig
 }
 
 func registerFlagsRootCmd(cmd *cobra.Command) {
@@ -153,13 +153,13 @@ func GetConfigFiles() (string, string, string, string, string) {
 	return config.GenesisFile(), config.ConfigFilePath(), config.DBDir(), config.ValidatorsFile(), config.PrivValidatorFile()
 }
 
-func SetTdmConfig(CreateEmptyBlocks bool, ForceGenerateBlock bool, Interval int) (*cfg.Config, string) {
+func SetConfig(CreateEmptyBlocks bool, ForceIntervalBlockSwitch bool, CreateEmptyBlocksInterval int) (*cfg.Config, string) {
 	cfgConsensus := config.Consensus
 	cfgMempool := config.Mempool
 
 	cfgConsensus.CreateEmptyBlocks = CreateEmptyBlocks
-	cfgMempool.ForceGenerateBlockSwitch = ForceGenerateBlock
-	cfgConsensus.CreateEmptyBlocksInterval = Interval
+	cfgMempool.ForceIntervalBlockSwitch = ForceIntervalBlockSwitch
+	cfgConsensus.CreateEmptyBlocksInterval = CreateEmptyBlocksInterval
 
 	_, configFilePath, _, _, _ := GetConfigFiles()
 
