@@ -162,14 +162,15 @@ type ResultBroadcastTxCommit struct {
 
 // Result of querying for a tx
 type ResultTx struct {
-	Hash          string                 `json:"hash"`
-	Height        int64                  `json:"height"`
-	Index         uint32                 `json:"index"`
-	DeliverResult abci.ResponseDeliverTx `json:"deliver_tx,omitempt"`
-	CheckResult   abci.ResponseCheckTx   `json:"check_tx,omitempt"`
-	Tx            types.Tx               `json:"tx"`
-	Proof         types.TxProof          `json:"proof,omitempty"`
-	StateCode     uint32                 `json:"state_code"`
+	Hash           string                 `json:"hash"`
+	Height         int64                  `json:"height"`
+	Index          uint32                 `json:"index"`
+	DeliverResult  abci.ResponseDeliverTx `json:"deliver_tx,omitempt"`
+	CheckResult    abci.ResponseCheckTx   `json:"check_tx,omitempt"`
+	Tx             types.Tx               `json:"tx"`
+	Proof          types.TxProof          `json:"proof,omitempty"`
+	StateCode      uint32                 `json:"state_code"`
+	BlockCommitted bool                   `json:"block_committed"`
 }
 
 // List of mempool txs

@@ -372,7 +372,7 @@ type MempoolConfig struct {
 	WalPath                  string `mapstructure:"wal_dir"`
 	CacheSize                int    `mapstructure:"cache_size"`
 	CTxCacheTime             int64  `mapstructure:"ctx_cache_time"`
-	ForceGenerateBlockSwitch bool   `mapstructure:"force_generate_block_switch"`
+	ForceIntervalBlockSwitch bool   `mapstructure:"force_interval_block_switch"`
 }
 
 // DefaultMempoolConfig returns a default configuration for the Tendermint mempool

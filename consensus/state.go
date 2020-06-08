@@ -13,9 +13,9 @@ import (
 
 	"github.com/bcbchain/bclib/tendermint/go-crypto"
 
-	"github.com/ebuchman/fail-test"
 	cmn "github.com/bcbchain/bclib/tendermint/tmlibs/common"
 	"github.com/bcbchain/bclib/tendermint/tmlibs/log"
+	"github.com/ebuchman/fail-test"
 
 	cfg "github.com/bcbchain/tendermint/config"
 	cstypes "github.com/bcbchain/tendermint/consensus/types"
@@ -686,7 +686,7 @@ func (cs *ConsensusState) handleMsg(mi msgInfo) {
 	case *ProposalMessage:
 		// will not cause transition.
 		// once proposal is set, we can receive block parts
-		cs.Logger.Warn("ProposalMessage", "msg", msg, "proposer", cs.currentProposer) // TODO 增加个日志查找验签失败原因，随后此条日志将被删除
+		cs.Logger.Warn("Error with msg", "msg", msg, "proposer", cs.currentProposer) // TODO 增加个日志查找验签失败原因，随后此条日志将被删除
 		err = cs.setProposal(msg.Proposal)
 	case *BlockPartMessage:
 		// if the proposal is complete, we'll enterPrevote or tryFinalizeCommit
@@ -703,7 +703,7 @@ func (cs *ConsensusState) handleMsg(mi msgInfo) {
 			// We probably don't want to stop the peer here. The vote does not
 			// necessarily comes from a malicious peer but can be just broadcasted by
 			// a typical peer.
-			// https://github.com/bcbchain/tendermint/issues/1281
+			// https://github.com/tendermint/tendermint/issues/1281
 		}
 
 		// NOTE: the vote is broadcast to peers by the reactor listening
@@ -820,7 +820,6 @@ func (cs *ConsensusState) enterNewRound(height int64, round int) {
 	// Wait for txs to be available in the mempool
 	// before we enterPropose in round 0. If the last block changed the app hash,
 	// we may need an empty "proof" block, and enterPropose immediately.
-	//waitForTxs := cs.config.WaitForTxs() && round == 0 && !cs.needProofBlock(height)
 	waitForTxs := cs.config.WaitForTxs() && round == 0
 	if waitForTxs {
 		if cs.config.CreateEmptyBlocksInterval > 0 {
