@@ -1,11 +1,11 @@
 package core
 
 import (
-	"github.com/pkg/errors"
 	abci "github.com/bcbchain/bclib/tendermint/abci/types"
+	cmn "github.com/bcbchain/bclib/tendermint/tmlibs/common"
 	ctypes "github.com/bcbchain/tendermint/rpc/core/types"
 	"github.com/bcbchain/tendermint/version"
-	cmn "github.com/bcbchain/bclib/tendermint/tmlibs/common"
+	"github.com/pkg/errors"
 )
 
 // Query the application for some information.
@@ -107,10 +107,13 @@ func ABCIQueryEx(path string) (*ctypes.ResultABCIQueryEx, error) {
 // }
 // ```
 func ABCIInfo() (*ctypes.ResultABCIInfo, error) {
-	if completeStarted == false {
-		return nil, errors.New("service not ready")
-	}
+	//if completeStarted == false {
+	//	return nil, errors.New("service not ready")
+	//}
 
+	if proxyAppQuery == nil && proxyApp != nil {
+		proxyAppQuery = proxyApp.Query()
+	}
 	resInfo, err := proxyAppQuery.InfoSync(abci.RequestInfo{
 		Version: version.Version,
 	})

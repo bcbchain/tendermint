@@ -228,6 +228,7 @@ func NewNode(config *cfg.Config,
 	handshaker.SetLogger(consensusLogger)
 	proxyApp := proxy.NewAppConns(clientCreator, handshaker)
 	proxyApp.SetLogger(logger.With("module", "proxy"))
+	rpccore.SetAppConns(proxyApp)
 	if err := proxyApp.Start(); err != nil {
 		logger.Info("连接 abci 失败", "err", err)
 		return nil, fmt.Errorf("Error starting proxy app connections: %v", err)

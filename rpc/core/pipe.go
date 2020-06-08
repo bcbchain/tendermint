@@ -5,14 +5,14 @@ import (
 	"time"
 
 	"github.com/bcbchain/bclib/tendermint/go-crypto"
+	dbm "github.com/bcbchain/bclib/tendermint/tmlibs/db"
+	"github.com/bcbchain/bclib/tendermint/tmlibs/log"
 	"github.com/bcbchain/tendermint/consensus"
 	"github.com/bcbchain/tendermint/p2p"
 	"github.com/bcbchain/tendermint/proxy"
 	sm "github.com/bcbchain/tendermint/state"
 	"github.com/bcbchain/tendermint/state/txindex"
 	"github.com/bcbchain/tendermint/types"
-	dbm "github.com/bcbchain/bclib/tendermint/tmlibs/db"
-	"github.com/bcbchain/bclib/tendermint/tmlibs/log"
 )
 
 var subscribeTimeout = 5 * time.Second
@@ -42,6 +42,7 @@ type P2P interface {
 var (
 	// external, thread safe interfaces
 	proxyAppQuery proxy.AppConnQuery
+	proxyApp      proxy.AppConns
 
 	// interfaces defined in types and above
 	stateDB        dbm.DB
@@ -108,6 +109,10 @@ func SetAddrBook(book p2p.AddrBook) {
 
 func SetProxyAppQuery(appConn proxy.AppConnQuery) {
 	proxyAppQuery = appConn
+}
+
+func SetAppConns(appConns proxy.AppConns) {
+	proxyApp = appConns
 }
 
 func SetTxIndexer(indexer txindex.TxIndexer) {

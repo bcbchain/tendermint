@@ -404,7 +404,7 @@ func (mem *Mempool) notifyTxsAvailable() {
 		return
 	}
 	// switch 为 true 时,强制在一定时间后才出块
-	if mem.config.ForceGenerateBlockSwitch {
+	if mem.config.ForceIntervalBlockSwitch {
 		return
 	}
 

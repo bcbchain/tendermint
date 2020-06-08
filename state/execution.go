@@ -10,15 +10,15 @@ import (
 	"strings"
 
 	abci "github.com/bcbchain/bclib/tendermint/abci/types"
-	"github.com/bcbchain/tendermint/config"
 	"github.com/bcbchain/bclib/tendermint/go-crypto"
+	dbm "github.com/bcbchain/bclib/tendermint/tmlibs/db"
+	"github.com/bcbchain/bclib/tendermint/tmlibs/log"
+	"github.com/bcbchain/tendermint/config"
 	"github.com/bcbchain/tendermint/mempool"
 	"github.com/bcbchain/tendermint/proxy"
 	"github.com/bcbchain/tendermint/relay"
 	"github.com/bcbchain/tendermint/sidechain"
 	"github.com/bcbchain/tendermint/softforks"
-	dbm "github.com/bcbchain/bclib/tendermint/tmlibs/db"
-	"github.com/bcbchain/bclib/tendermint/tmlibs/log"
 	"github.com/bcbchain/tendermint/types"
 	"github.com/ebuchman/fail-test"
 	"github.com/pkg/errors"
@@ -56,6 +56,14 @@ type BlockExecutor struct {
 	evpool  types.EvidencePool
 
 	logger log.Logger
+}
+
+// Modify tendermint config and configFile  by smart contract
+
+type SetConfig struct {
+	CreateEmptyBlocks         bool `json:"create_empty_blocks"`
+	ForceIntervalBlockSwitch  bool `json:"force_interval_block_switch"`
+	CreateEmptyBlocksInterval int  `json:"create_empty_blocks_interval"`
 }
 
 // NewBlockExecutor returns a new BlockExecutor with a NopEventBus.
@@ -685,10 +693,9 @@ func filterConfigSetReceipts(abciResponse *ABCIResponses) {
 
 	for _, deliverTx := range abciResponse.DeliverTx {
 		if deliverTx.Code == 200 {
-
 			for _, tag := range deliverTx.Tags {
-				if strings.HasSuffix(string(tag.Key), "/governance.SetTdmConfig") {
-					setConfigReceipt := new(SetTdmConfig)
+				if strings.HasSuffix(string(tag.Key), "/governance.SetConfig") {
+					setConfigReceipt := new(SetConfig)
 					var receipt relay.Receipt
 
 					err := jsoniter.Unmarshal(tag.Value, &receipt)
@@ -702,22 +709,21 @@ func filterConfigSetReceipts(abciResponse *ABCIResponses) {
 					}
 
 					setBlockInterval(*setConfigReceipt)
+					return
 				}
 			}
-
 		}
 	}
-
 }
 
-func setBlockInterval(setConfigReceipt SetTdmConfig) {
+func setBlockInterval(setConfigReceipt SetConfig) {
 
-	forceGenerateBlock := setConfigReceipt.ForceGenerateBlock
-	Milliinterval := setConfigReceipt.Interval
+	ForceIntervalBlockSwitch := setConfigReceipt.ForceIntervalBlockSwitch
+	MilliInterval := setConfigReceipt.CreateEmptyBlocksInterval
 	createEmptyBlock := setConfigReceipt.CreateEmptyBlocks
 
 	// 修改缓存配置信息, 重写配置文件
-	cfg, configFilePath := SetConfigFunc(createEmptyBlock, forceGenerateBlock, Milliinterval/1000)
+	cfg, configFilePath := SetConfigFunc(createEmptyBlock, ForceIntervalBlockSwitch, MilliInterval/1000)
 	config.WriteConfigFile(configFilePath, cfg)
 
 }
