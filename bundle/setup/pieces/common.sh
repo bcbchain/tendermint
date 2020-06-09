@@ -197,7 +197,9 @@ installFollower() {
   echo ""
   echo "You selected \"${officials}\" to follow"
   echo ""
-  chainID=$(getChainIDFromNode ${officials})
+  chainID=
+  chainVersion=
+  getChainInfoFromNode ${officials} chainID chainVersion
   if [ "${chainID}" == "" ]; then
     echo "Cannot get chainID from ${officials}"
     echo ""
