@@ -5,7 +5,7 @@ PACKAGES=$(shell go list ./... | grep -v '/vendor/')
 BUILD_TAGS?=tendermint
 BUILD_FLAGS = -ldflags "-X github.com/bcbchain/tendermint/version.GitCommit=`git rev-parse --short=8 HEAD`"
 
-all: dist
+all: build
 
 ########################################
 ### Build
