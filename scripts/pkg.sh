@@ -32,7 +32,7 @@ do
     echo "$CHAIN"
 	  cp -rf "./bundle/genesis/${CHAIN}" "./build/pkg/$PKG/pieces/"
 
-	  if [ -d "./build/.config/${CHAIN}" ];then
+	  if [ -d "./bundle/.config/${CHAIN}" ];then
 	    cp -rf "./bundle/.config/${CHAIN}" "./build/pkg/$PKG/pieces/"
 	  fi
 
