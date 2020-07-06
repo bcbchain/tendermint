@@ -3,6 +3,8 @@ package consensus
 import (
 	"bytes"
 	"fmt"
+	"github.com/bcbchain/tendermint/config"
+
 	"github.com/bcbchain/tendermint/relay"
 	"hash/crc32"
 	"io"
@@ -11,7 +13,6 @@ import (
 	"strings"
 	"time"
 
-	"github.com/bcbchain/tendermint/config"
 	"github.com/bcbchain/tendermint/proxy"
 
 	abci "github.com/bcbchain/bclib/tendermint/abci/types"
@@ -19,10 +20,10 @@ import (
 	dbm "github.com/bcbchain/bclib/tendermint/tmlibs/db"
 	"github.com/bcbchain/bclib/tendermint/tmlibs/log"
 
-	"github.com/pkg/errors"
 	sm "github.com/bcbchain/tendermint/state"
 	"github.com/bcbchain/tendermint/types"
 	"github.com/bcbchain/tendermint/version"
+	"github.com/pkg/errors"
 )
 
 var crc32c = crc32.MakeTable(crc32.Castagnoli)
@@ -256,11 +257,16 @@ func (h *Handshaker) Handshake(proxyApp proxy.AppConns) error {
 
 	h.logger.Info("ABCI Handshake", "appHeight", blockHeight, "appState", fmt.Sprintf("%X", res.LastAppState))
 
+	//show the handshaker info
+	h.logger.Info("show the handshaker info ", "handshaker", *h)
+	h.logger.Info("handershake info", "handshaker ", h.stateDB)
+
 	// TODO: check version
 
 	// replay blocks up to the latest in the blockstore
 	_, err = h.ReplayBlocks(h.initialState, res.LastAppState, blockHeight, proxyApp)
 	if err != nil {
+		time.Sleep(time.Second * 5)
 		return fmt.Errorf("Error on replay(height:%d): %v", blockHeight, err)
 	}
 
@@ -319,7 +325,7 @@ func (h *Handshaker) ReplayBlocks(state sm.State, appStateData []byte, appBlockH
 		appState = abci.ByteToAppState(res.GenAppState)
 		appHash = appState.AppHash
 		h.logger.Info("after init", "appHash", appHash, " state.LastAppHash", state.LastAppHash)
-	}
+	} //
 
 	relay.Init(h.conf, h.logger, proxyApp)
 
@@ -338,59 +344,18 @@ func (h *Handshaker) ReplayBlocks(state sm.State, appStateData []byte, appBlockH
 	} else if storeBlockHeight < stateBlockHeight {
 		// the state should never be ahead of the store (this is under tendermint's control)
 		cmn.PanicSanity(cmn.Fmt("StateBlockHeight (%d) > StoreBlockHeight (%d)", stateBlockHeight, storeBlockHeight))
-
-	} else if storeBlockHeight > stateBlockHeight+1 {
-		// store should be at most one ahead of the state (this is under tendermint's control)
-		cmn.PanicSanity(cmn.Fmt("StoreBlockHeight (%d) > StateBlockHeight + 1 (%d)", storeBlockHeight, stateBlockHeight+1))
 	}
 
-	var err error
-	// Now either store is equal to state, or one ahead.
-	// For each, consider all cases of where the app could be, given app <= store
-	if storeBlockHeight == stateBlockHeight {
-		// Tendermint ran Commit and saved the state.
-		// Either the app is asking for replay, or we're all synced up.
-		if appBlockHeight < storeBlockHeight {
-			// the app is behind, so replay blocks, but no need to go through WAL (state is already synced to store)
-			return h.replayBlocks(state, proxyApp, appBlockHeight, storeBlockHeight, false)
-
-		} else if appBlockHeight == storeBlockHeight {
-			h.logger.Info(" appBlockHeight == storeBlockHeight", "AppHash", appHash)
+	if appBlockHeight == storeBlockHeight {
+		if appBlockHeight == stateBlockHeight {
 			// We're good!
 			return appHash, checkAppHash(state, appHash)
-		}
-
-	} else if storeBlockHeight == stateBlockHeight+1 {
-		// We saved the block in the store but haven't updated the state,
-		// so we'll need to replay a block using the WAL.
-		if appBlockHeight < stateBlockHeight {
-			// the app is further behind than it should be, so replay blocks
-			// but leave the last block to go through the WAL
+		} else {
 			return h.replayBlocks(state, proxyApp, appBlockHeight, storeBlockHeight, true)
-
-		} else if appBlockHeight == stateBlockHeight {
-			// We haven't run Commit (both the state and app are one block behind),
-			// so replayBlock with the real app.
-			// NOTE: We could instead use the cs.WAL on cs.Start,
-			// but we'd have to allow the WAL to replay a block that wrote it's ENDHEIGHT
-			h.logger.Info("Replay last block using real app")
-			state, err = h.replayBlock(state, storeBlockHeight, proxyApp.Consensus())
-			return state.LastAppHash, err
-
-		} else if appBlockHeight == storeBlockHeight {
-			// We ran Commit, but didn't save the state, so replayBlock with mock app
-			abciResponses, err := sm.LoadABCIResponses(h.stateDB, storeBlockHeight)
-			if err != nil {
-				return nil, err
-			}
-			mockApp := newMockProxyApp(appStateData, abciResponses)
-			h.logger.Info("Replay last block using mock app")
-			state, err = h.replayBlock(state, storeBlockHeight, mockApp)
-			return state.LastAppHash, err
 		}
-
+	} else {
+		return h.replayBlocks(state, proxyApp, appBlockHeight, storeBlockHeight, true)
 	}
-
 	cmn.PanicSanity("Should never happen")
 	return nil, nil
 }
@@ -406,43 +371,34 @@ func (h *Handshaker) replayBlocks(state sm.State, proxyApp proxy.AppConns, appBl
 	//
 	// If mutateState == true, the final block is replayed with h.replayBlock()
 
-	var res *abci.ResponseCommit
 	var err error
 	finalBlock := storeBlockHeight
 	if mutateState {
 		finalBlock--
 	}
-	var appState *abci.AppState
+
+	//make a new state
+	state = h.makeState(appBlockHeight)
+	time.Sleep(time.Second * 5)
+	h.logger.Info("new state is ", state)
 
 	for i := appBlockHeight + 1; i <= finalBlock; i++ {
 		h.logger.Info("Applying block", "height", i)
-		block := h.store.LoadBlock(i)
-		//note present block contains last apphash,so we should check it
-		res, err = sm.ExecCommitBlock(proxyApp.Consensus(), block, h.logger)
+		// sync the bachain final block
+		state, err = h.replayBlock(state, i, proxyApp.Consensus())
 		if err != nil {
 			return nil, err
 		}
-		appState = abci.ByteToAppState(res.AppState)
-		if i < finalBlock {
-			nextBlock := h.store.LoadBlock(i + 1)
-			err = checkBlockAppHash(appState.AppHash, nextBlock.LastAppHash, i)
-			if err != nil {
-				return nil, err
-			}
-		}
-		h.nBlocks++
 	}
-
 	if mutateState {
 		// sync the final block
 		state, err = h.replayBlock(state, storeBlockHeight, proxyApp.Consensus())
 		if err != nil {
 			return nil, err
 		}
-		appState.AppHash = state.LastAppHash
 	}
 
-	return appState.AppHash, checkAppHash(state, appState.AppHash)
+	return state.LastAppHash, checkAppHash(state, state.LastAppHash)
 }
 
 // ApplyBlock on the proxyApp with the last block.
@@ -461,6 +417,56 @@ func (h *Handshaker) replayBlock(state sm.State, height int64, proxyApp proxy.Ap
 	h.nBlocks++
 
 	return state, nil
+}
+
+//makeState make a new state which point the last appblock
+func (h *Handshaker) makeState(height int64) sm.State {
+	h.logger.Info("makeStateing")
+	block := h.store.LoadBlock(height)
+	nextblock := h.store.LoadBlock(height + 1)
+	validators, err := sm.LoadValidators(h.stateDBx, height)
+	if err != nil {
+		panic(err)
+	}
+	lastValidators, err := sm.LoadValidators(h.stateDBx, height-1)
+	if err != nil {
+		panic(err)
+	}
+	s := sm.LoadState(h.stateDBx)
+	lastHeightValidatorsChangedsm, err := sm.LoadConsensusParamsInfoLastHeightChanged(h.stateDBx, height)
+	if err != nil {
+		panic(err)
+	}
+	loadValidatorLastHeightChanged, err := sm.LoadValidatorLastHeightChanged(h.stateDBx, height)
+	if err != nil {
+		panic(err)
+	}
+	loadConsensusParamssm, err := sm.LoadConsensusParams(h.stateDBx, height)
+	if err != nil {
+		panic(err)
+	}
+	s = sm.State{
+		ChainID:                          block.ChainID,
+		LastBlockHeight:                  block.Height,
+		LastBlockTotalTx:                 block.TotalTxs,
+		LastBlockID:                      nextblock.LastBlockID,
+		LastBlockTime:                    block.Time,
+		LastFee:                          nextblock.LastFee,
+		LastAllocation:                   nextblock.LastAllocation,
+		Validators:                       validators,
+		LastValidators:                   lastValidators,
+		LastHeightValidatorsChanged:      lastHeightValidatorsChangedsm,
+		ConsensusParams:                  loadConsensusParamssm,
+		LastHeightConsensusParamsChanged: loadValidatorLastHeightChanged,
+		LastResultsHash:                  nextblock.LastResultsHash,
+		LastAppHash:                      nextblock.LastAppHash,
+		LastTxsHashList:                  nextblock.LastTxsHashList,
+		LastMining:                       nextblock.LastMining,
+		ChainVersion:                     *block.ChainVersion,
+		LastQueueChains:                  nextblock.LastQueueChains,
+	}
+
+	return s
 }
 
 func checkBlockAppHash(appHash, blockAppHash []byte, height int64) error {
