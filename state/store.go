@@ -1,14 +1,14 @@
 package state
 
 import (
-	"github.com/bcbchain/bclib/jsoniter"
 	"fmt"
+	"github.com/bcbchain/bclib/jsoniter"
 
 	abci "github.com/bcbchain/bclib/tendermint/abci/types"
-	cfg "github.com/bcbchain/tendermint/config"
-	"github.com/bcbchain/tendermint/types"
 	cmn "github.com/bcbchain/bclib/tendermint/tmlibs/common"
 	dbm "github.com/bcbchain/bclib/tendermint/tmlibs/db"
+	cfg "github.com/bcbchain/tendermint/config"
+	"github.com/bcbchain/tendermint/types"
 )
 
 //------------------------------------------------------------------------
@@ -102,8 +102,8 @@ func loadState(db dbm.DB, key []byte) (state State) {
 // SaveState persists the State, the ValidatorsInfo, and the ConsensusParamsInfo to the database.
 func SaveState(db dbm.DB, s State) {
 	// update last state
-	ls := LoadState(db)
-	SaveLastState(db, ls)
+	//ls := LoadState(db)
+	//SaveLastState(db, ls)
 
 	// save new state
 	saveState(db, s, stateKey)
@@ -235,6 +235,15 @@ func LoadValidators(db dbm.DB, height int64) (*types.ValidatorSet, error) {
 	return valInfo.ValidatorSet, nil
 }
 
+// LoadValidatorLastHeightChanged load the validatorsInfo's LastHeightChanged
+// Returns -1 and ErrNoValSetForHeight if the validator set can't be found for this height.
+func LoadValidatorLastHeightChanged(db dbm.DB, height int64) (int64, error) {
+	valInfo := loadValidatorsInfo(db, height)
+	if valInfo == nil {
+		return -1, ErrNoValSetForHeight{height}
+	}
+	return valInfo.LastHeightChanged, nil
+}
 func loadValidatorsInfo(db dbm.DB, height int64) *ValidatorsInfo {
 	buf := db.Get(calcValidatorsKey(height))
 	if len(buf) == 0 {
@@ -300,6 +309,15 @@ func LoadConsensusParams(db dbm.DB, height int64) (types.ConsensusParams, error)
 	return paramsInfo.ConsensusParams, nil
 }
 
+//LoadConsensusParamsInfoLastHeightChanged loads the ConsensusParams's LastHeightChanged  for a given height.
+func LoadConsensusParamsInfoLastHeightChanged(db dbm.DB, height int64) (int64, error) {
+	paramsInfo := loadConsensusParamsInfo(db, height)
+	if paramsInfo == nil {
+		return -1, ErrNoConsensusParamsForHeight{height}
+	}
+
+	return paramsInfo.LastHeightChanged, nil
+}
 func loadConsensusParamsInfo(db dbm.DB, height int64) *ConsensusParamsInfo {
 	buf := db.Get(calcConsensusParamsKey(height))
 	if len(buf) == 0 {
