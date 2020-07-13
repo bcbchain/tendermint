@@ -235,14 +235,13 @@ func LoadValidators(db dbm.DB, height int64) (*types.ValidatorSet, error) {
 	return valInfo.ValidatorSet, nil
 }
 
-// LoadValidatorLastHeightChanged load the validatorsInfo's LastHeightChanged
-// Returns -1 and ErrNoValSetForHeight if the validator set can't be found for this height.
-func LoadValidatorLastHeightChanged(db dbm.DB, height int64) (int64, error) {
+//LoadValidatorsInfo loads the ValidatorsInfo for a given height.
+func LoadValidatorsInfo(db dbm.DB, height int64) (*ValidatorsInfo, error) {
 	valInfo := loadValidatorsInfo(db, height)
 	if valInfo == nil {
-		return -1, ErrNoValSetForHeight{height}
+		return valInfo, ErrNoValSetForHeight{height}
 	}
-	return valInfo.LastHeightChanged, nil
+	return valInfo, nil
 }
 func loadValidatorsInfo(db dbm.DB, height int64) *ValidatorsInfo {
 	buf := db.Get(calcValidatorsKey(height))
@@ -309,15 +308,26 @@ func LoadConsensusParams(db dbm.DB, height int64) (types.ConsensusParams, error)
 	return paramsInfo.ConsensusParams, nil
 }
 
-//LoadConsensusParamsInfoLastHeightChanged loads the ConsensusParams's LastHeightChanged  for a given height.
-func LoadConsensusParamsInfoLastHeightChanged(db dbm.DB, height int64) (int64, error) {
+//LoadConsensusParamsInfo loads the ConsensusParamsInfo for a given height.
+func LoadConsensusParamsInfo(db dbm.DB, height int64) (*ConsensusParamsInfo, error) {
+	empty := types.ConsensusParams{}
+
 	paramsInfo := loadConsensusParamsInfo(db, height)
 	if paramsInfo == nil {
-		return -1, ErrNoConsensusParamsForHeight{height}
+		return paramsInfo, ErrNoConsensusParamsForHeight{height}
 	}
 
-	return paramsInfo.LastHeightChanged, nil
+	if paramsInfo.ConsensusParams == empty {
+		paramsInfo = loadConsensusParamsInfo(db, paramsInfo.LastHeightChanged)
+		if paramsInfo == nil {
+			cmn.PanicSanity(fmt.Sprintf(`Couldn't find consensus params at height %d as
+                        last changed from height %d`, 0, height))
+		}
+	}
+
+	return paramsInfo, nil
 }
+
 func loadConsensusParamsInfo(db dbm.DB, height int64) *ConsensusParamsInfo {
 	buf := db.Get(calcConsensusParamsKey(height))
 	if len(buf) == 0 {
