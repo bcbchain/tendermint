@@ -351,16 +351,15 @@ func (h *Handshaker) ReplayBlocks(state sm.State, appStateData []byte, appBlockH
 			// We're good!
 			return appHash, checkAppHash(state, appHash)
 		} else {
-			return h.replayBlocks(state, proxyApp, appBlockHeight, storeBlockHeight, true)
+			return h.replayBlocks(state, proxyApp, appBlockHeight, storeBlockHeight)
 		}
 	} else {
-		return h.replayBlocks(state, proxyApp, appBlockHeight, storeBlockHeight, true)
+		return h.replayBlocks(state, proxyApp, appBlockHeight, storeBlockHeight)
 	}
-	cmn.PanicSanity("Should never happen")
-	return nil, nil
+
 }
 
-func (h *Handshaker) replayBlocks(state sm.State, proxyApp proxy.AppConns, appBlockHeight, storeBlockHeight int64, mutateState bool) ([]byte, error) {
+func (h *Handshaker) replayBlocks(state sm.State, proxyApp proxy.AppConns, appBlockHeight, storeBlockHeight int64) ([]byte, error) {
 	// App is further behind than it should be, so we need to replay blocks.
 	// We replay all blocks from appBlockHeight+1.
 	//
@@ -369,33 +368,19 @@ func (h *Handshaker) replayBlocks(state sm.State, proxyApp proxy.AppConns, appBl
 	// This also means we won't be saving validator sets if they change during this period.
 	// TODO: Load the historical information to fix this and just use state.ApplyBlock
 	//
-	// If mutateState == true, the final block is replayed with h.replayBlock()
-
-	var err error
-	finalBlock := storeBlockHeight
-	if mutateState {
-		finalBlock--
-	}
 
 	//make a new state
 	state = h.makeState(appBlockHeight)
-	time.Sleep(time.Second * 5)
-	h.logger.Info("new state is ", state)
+	h.logger.Info(cmn.Fmt("new state is %v", state))
 
-	for i := appBlockHeight + 1; i <= finalBlock; i++ {
+	for i := appBlockHeight + 1; i <= storeBlockHeight; i++ {
 		h.logger.Info("Applying block", "height", i)
-		// sync the bachain final block
-		state, err = h.replayBlock(state, i, proxyApp.Consensus())
+		// sync the bcbChain final block
+		state, err := h.replayBlock(state, i, proxyApp.Consensus())
 		if err != nil {
 			return nil, err
 		}
-	}
-	if mutateState {
-		// sync the final block
-		state, err = h.replayBlock(state, storeBlockHeight, proxyApp.Consensus())
-		if err != nil {
-			return nil, err
-		}
+		h.logger.Info(cmn.Fmt("replay state is %v", state))
 	}
 
 	return state.LastAppHash, checkAppHash(state, state.LastAppHash)
@@ -419,51 +404,45 @@ func (h *Handshaker) replayBlock(state sm.State, height int64, proxyApp proxy.Ap
 	return state, nil
 }
 
-//makeState make a new state which point the last appblock
-func (h *Handshaker) makeState(height int64) sm.State {
-	h.logger.Info("makeStateing")
-	block := h.store.LoadBlock(height)
-	nextblock := h.store.LoadBlock(height + 1)
-	validators, err := sm.LoadValidators(h.stateDBx, height)
+//makeState make a new state which point the last appBlock
+func (h *Handshaker) makeState(lastBlockHeight int64) sm.State {
+	h.logger.Info("making state", "height", lastBlockHeight)
+
+	block := h.store.LoadBlock(lastBlockHeight)
+	nextBlock := h.store.LoadBlock(lastBlockHeight + 1)
+
+	consensusParamsInfo, err := sm.LoadConsensusParamsInfo(h.stateDBx, lastBlockHeight)
 	if err != nil {
 		panic(err)
 	}
-	lastValidators, err := sm.LoadValidators(h.stateDBx, height-1)
+	validatorsInfo, err := sm.LoadValidatorsInfo(h.stateDBx, lastBlockHeight)
 	if err != nil {
 		panic(err)
 	}
-	s := sm.LoadState(h.stateDBx)
-	lastHeightValidatorsChangedsm, err := sm.LoadConsensusParamsInfoLastHeightChanged(h.stateDBx, height)
+	prevValidatorsInfo, err := sm.LoadValidatorsInfo(h.stateDBx, lastBlockHeight-1)
 	if err != nil {
 		panic(err)
 	}
-	loadValidatorLastHeightChanged, err := sm.LoadValidatorLastHeightChanged(h.stateDBx, height)
-	if err != nil {
-		panic(err)
-	}
-	loadConsensusParamssm, err := sm.LoadConsensusParams(h.stateDBx, height)
-	if err != nil {
-		panic(err)
-	}
-	s = sm.State{
+
+	s := sm.State{
 		ChainID:                          block.ChainID,
 		LastBlockHeight:                  block.Height,
 		LastBlockTotalTx:                 block.TotalTxs,
-		LastBlockID:                      nextblock.LastBlockID,
+		LastBlockID:                      nextBlock.LastBlockID,
 		LastBlockTime:                    block.Time,
-		LastFee:                          nextblock.LastFee,
-		LastAllocation:                   nextblock.LastAllocation,
-		Validators:                       validators,
-		LastValidators:                   lastValidators,
-		LastHeightValidatorsChanged:      lastHeightValidatorsChangedsm,
-		ConsensusParams:                  loadConsensusParamssm,
-		LastHeightConsensusParamsChanged: loadValidatorLastHeightChanged,
-		LastResultsHash:                  nextblock.LastResultsHash,
-		LastAppHash:                      nextblock.LastAppHash,
-		LastTxsHashList:                  nextblock.LastTxsHashList,
-		LastMining:                       nextblock.LastMining,
+		LastFee:                          nextBlock.LastFee,
+		LastAllocation:                   nextBlock.LastAllocation,
+		Validators:                       validatorsInfo.ValidatorSet,
+		LastValidators:                   prevValidatorsInfo.ValidatorSet,
+		LastHeightValidatorsChanged:      validatorsInfo.LastHeightChanged,
+		ConsensusParams:                  consensusParamsInfo.ConsensusParams,
+		LastHeightConsensusParamsChanged: consensusParamsInfo.LastHeightChanged,
+		LastResultsHash:                  nextBlock.LastResultsHash,
+		LastAppHash:                      nextBlock.LastAppHash,
+		LastTxsHashList:                  nextBlock.LastTxsHashList,
+		LastMining:                       nextBlock.LastMining,
 		ChainVersion:                     *block.ChainVersion,
-		LastQueueChains:                  nextblock.LastQueueChains,
+		LastQueueChains:                  nextBlock.LastQueueChains,
 	}
 
 	return s
