@@ -257,10 +257,6 @@ func (h *Handshaker) Handshake(proxyApp proxy.AppConns) error {
 
 	h.logger.Info("ABCI Handshake", "appHeight", blockHeight, "appState", fmt.Sprintf("%X", res.LastAppState))
 
-	//show the handshaker info
-	h.logger.Info("show the handshaker info ", "handshaker", *h)
-	h.logger.Info("handershake info", "handshaker ", h.stateDB)
-
 	// TODO: check version
 
 	// replay blocks up to the latest in the blockstore
@@ -344,10 +340,16 @@ func (h *Handshaker) ReplayBlocks(state sm.State, appStateData []byte, appBlockH
 	} else if storeBlockHeight < stateBlockHeight {
 		// the state should never be ahead of the store (this is under tendermint's control)
 		cmn.PanicSanity(cmn.Fmt("StateBlockHeight (%d) > StoreBlockHeight (%d)", stateBlockHeight, storeBlockHeight))
+	} else if storeBlockHeight < stateBlockHeight {
+		// the state should never be ahead of the store (this is under tendermint's control)
+		cmn.PanicSanity(cmn.Fmt("StateBlockHeight (%d) > StoreBlockHeight (%d)", stateBlockHeight, storeBlockHeight))
+	} else if stateBlockHeight+1 < appBlockHeight {
+		// app should be at most one ahead of the state (this is under tendermint's control)
+		cmn.PanicSanity(cmn.Fmt("StateBlockHeight (%d) > appBlockHeight (%d)", stateBlockHeight, appBlockHeight))
 	}
 
-	if appBlockHeight == storeBlockHeight {
-		if appBlockHeight == stateBlockHeight {
+	if storeBlockHeight == appBlockHeight {
+		if stateBlockHeight == appBlockHeight {
 			// We're good!
 			return appHash, checkAppHash(state, appHash)
 		} else {
@@ -372,11 +374,11 @@ func (h *Handshaker) replayBlocks(state sm.State, proxyApp proxy.AppConns, appBl
 	//make a new state
 	state = h.makeState(appBlockHeight)
 	h.logger.Info(cmn.Fmt("new state is %v", state))
-
+	var err error
 	for i := appBlockHeight + 1; i <= storeBlockHeight; i++ {
 		h.logger.Info("Applying block", "height", i)
 		// sync the bcbChain final block
-		state, err := h.replayBlock(state, i, proxyApp.Consensus())
+		state, err = h.replayBlock(state, i, proxyApp.Consensus())
 		if err != nil {
 			return nil, err
 		}
@@ -398,9 +400,7 @@ func (h *Handshaker) replayBlock(state sm.State, height int64, proxyApp proxy.Ap
 	if err != nil {
 		return sm.State{}, err
 	}
-
 	h.nBlocks++
-
 	return state, nil
 }
 
