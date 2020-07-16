@@ -259,17 +259,15 @@ func (h *Handshaker) Handshake(proxyApp proxy.AppConns) error {
 
 	// TODO: check version
 
-	// replay blocks up to the latest in the blockstore
+	// replay blocks up to the latest in the blockStore
 	_, err = h.ReplayBlocks(h.initialState, res.LastAppState, blockHeight, proxyApp)
 	if err != nil {
-		time.Sleep(time.Second * 5)
 		return fmt.Errorf("Error on replay(height:%d): %v", blockHeight, err)
 	}
 
 	h.logger.Info("Completed ABCI Handshake - Tendermint and App are synced", "appHeight", blockHeight, "appState", fmt.Sprintf("%X", res.LastAppState))
 
 	// TODO: (on restart) replay mempool
-
 	return nil
 }
 
@@ -384,6 +382,8 @@ func (h *Handshaker) replayBlocks(state sm.State, proxyApp proxy.AppConns, appBl
 		}
 		h.logger.Info(cmn.Fmt("replay state is %v", state))
 	}
+
+	h.logger.Info("Completed ABCI Handshake - Tendermint and App are synced", "appHeight", state.LastBlockHeight, "appHash", fmt.Sprintf("%X", state.LastAppHash))
 
 	return state.LastAppHash, checkAppHash(state, state.LastAppHash)
 }
