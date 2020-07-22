@@ -4,9 +4,9 @@ import (
 	"bytes"
 	"errors"
 	"fmt"
+	dbm "github.com/bcbchain/bclib/tendermint/tmlibs/db"
 	"github.com/bcbchain/tendermint/proxy"
 	"github.com/bcbchain/tendermint/types"
-	dbm "github.com/bcbchain/bclib/tendermint/tmlibs/db"
 )
 
 //-----------------------------------------------------
@@ -139,14 +139,6 @@ func rollback(proxyApp proxy.AppConnConsensus, stateDBx dbm.DB) {
 		panic(r.Log)
 	}
 
-	// rollback state to last state
-	s := LoadLastState(stateDBx)
-	SaveState(stateDBx, s)
-
-	// storeBlockHeight - 1
-	storeState := LoadBlockStoreStateJSON(stateDBx)
-	storeState.Height = storeState.Height - 1
-	storeState.Save(stateDBx)
 }
 
 // 此处和 blockchain 包中一致，为了避免循环引用，所以这里也写了，以后有修改需要两处同步。
