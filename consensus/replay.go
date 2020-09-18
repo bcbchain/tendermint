@@ -421,7 +421,7 @@ func (h *Handshaker) replayBlock(state sm.State, height int64, proxyApp proxy.Ap
 
 //makeState make a new state which point the last appblock
 func (h *Handshaker) makeState(height int64) sm.State {
-	h.logger.Info("makeStateing")
+	h.logger.Info("making new state")
 	block := h.store.LoadBlock(height)
 	nextblock := h.store.LoadBlock(height + 1)
 	validators, err := sm.LoadValidators(h.stateDBx, height)

@@ -481,8 +481,8 @@ func (cs *ConsensusState) updateRoundStep(round int, step cstypes.RoundStepType)
 // enterNewRound(height, 0) at cs.StartTime.
 func (cs *ConsensusState) scheduleRound0(rs *cstypes.RoundState) {
 	//cs.Logger.Info("scheduleRound0", "now", time.Now(), "startTime", cs.StartTime)
-	sleepDuration := rs.StartTime.Sub(time.Now()) // nolint: gotype, gosimple
-	cs.scheduleTimeout(sleepDuration, rs.Height, 0, cstypes.RoundStepNewHeight)
+	//sleepDuration := rs.StartTime.Sub(time.Now()) // nolint: gotype, gosimple
+	cs.scheduleTimeout(0, rs.Height, 0, cstypes.RoundStepNewHeight)
 }
 
 // Attempt to schedule a timeout (by sending timeoutInfo on the tickChan)
@@ -822,8 +822,12 @@ func (cs *ConsensusState) enterNewRound(height int64, round int) {
 	// we may need an empty "proof" block, and enterPropose immediately.
 	waitForTxs := cs.config.WaitForTxs() && round == 0
 	if waitForTxs {
-		if cs.config.CreateEmptyBlocksInterval > 0 {
-			cs.scheduleTimeout(cs.config.EmptyBlocksInterval(), height, round, cstypes.RoundStepNewRound)
+		if cs.Height != 1 {
+			tim := time.Now().Sub(cs.blockStore.LoadBlock(cs.Height - 1).Time)
+			cs.scheduleTimeout(cs.config.EmptyBlocksInterval()-tim, height, round, cstypes.RoundStepNewRound)
+		} else {
+			tim := time.Now().Sub(cs.StartTime.Add(time.Second * -1))
+			cs.scheduleTimeout(cs.config.EmptyBlocksInterval()-tim, height, round, cstypes.RoundStepNewRound)
 		}
 		go cs.proposalHeartbeat(height, round)
 	} else {
