@@ -40,7 +40,7 @@ func NewSyncNodeCmd(nodeProvider nm.NodeProvider) *cobra.Command {
 
 			n, err := nodeProvider(config, logger)
 			if err != nil {
-				return fmt.Errorf("failed to create node: %v", err)
+				return fmt.Errorf("NewSyncNode failed to create node: %v", err)
 			}
 
 			if err := n.Start(); err != nil {

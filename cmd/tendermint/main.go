@@ -2,11 +2,10 @@ package main
 
 import (
 	"fmt"
+	"github.com/bcbchain/bclib/tendermint/tmlibs/cli"
 	"net/http"
 	"os"
 	"path/filepath"
-
-	"github.com/bcbchain/bclib/tendermint/tmlibs/cli"
 
 	_ "net/http/pprof"
 

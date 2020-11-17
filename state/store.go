@@ -323,7 +323,6 @@ func loadConsensusParamsInfo(db dbm.DB, height int64) *ConsensusParamsInfo {
 	if len(buf) == 0 {
 		return nil
 	}
-
 	paramsInfo := new(ConsensusParamsInfo)
 	err := cdc.UnmarshalBinaryBare(buf, paramsInfo)
 	if err != nil {

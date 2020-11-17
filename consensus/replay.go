@@ -351,7 +351,7 @@ func (h *Handshaker) ReplayBlocks(state sm.State, appStateData []byte, appBlockH
 			// We're good!
 			return appHash, checkAppHash(state, appHash)
 		} else {
-			return h.replayBlocks(state, proxyApp, appBlockHeight, storeBlockHeight, true)
+			return h.replayBlocks(state, proxyApp, appBlockHeight, storeBlockHeight, false)
 		}
 	} else {
 		return h.replayBlocks(state, proxyApp, appBlockHeight, storeBlockHeight, true)
@@ -374,13 +374,14 @@ func (h *Handshaker) replayBlocks(state sm.State, proxyApp proxy.AppConns, appBl
 	var err error
 	finalBlock := storeBlockHeight
 	if mutateState {
-		finalBlock--
+		//finalBlock--
 	}
 
 	//make a new state
-	state = h.makeState(appBlockHeight)
-	time.Sleep(time.Second * 5)
-	h.logger.Info("new state is ", state)
+	if appBlockHeight < storeBlockHeight {
+		state = h.makeState(appBlockHeight)
+		h.logger.Info("new state is ", state)
+	}
 
 	for i := appBlockHeight + 1; i <= finalBlock; i++ {
 		h.logger.Info("Applying block", "height", i)
@@ -390,13 +391,13 @@ func (h *Handshaker) replayBlocks(state sm.State, proxyApp proxy.AppConns, appBl
 			return nil, err
 		}
 	}
-	if mutateState {
-		// sync the final block
-		state, err = h.replayBlock(state, storeBlockHeight, proxyApp.Consensus())
-		if err != nil {
-			return nil, err
-		}
-	}
+	//if mutateState {
+	//	// sync the final block
+	//	state, err = h.replayBlock(state, storeBlockHeight, proxyApp.Consensus())
+	//	if err != nil {
+	//		return nil, err
+	//	}
+	//}
 
 	return state.LastAppHash, checkAppHash(state, state.LastAppHash)
 }
@@ -422,8 +423,15 @@ func (h *Handshaker) replayBlock(state sm.State, height int64, proxyApp proxy.Ap
 //makeState make a new state which point the last appblock
 func (h *Handshaker) makeState(height int64) sm.State {
 	h.logger.Info("making new state")
+
 	block := h.store.LoadBlock(height)
 	nextblock := h.store.LoadBlock(height + 1)
+	s := sm.LoadState(h.stateDBx)
+
+	lastHeightValidatorsChanged, err := sm.LoadValidatorLastHeightChanged(h.stateDBx, height)
+	if err != nil {
+		panic(err)
+	}
 	validators, err := sm.LoadValidators(h.stateDBx, height)
 	if err != nil {
 		panic(err)
@@ -432,16 +440,12 @@ func (h *Handshaker) makeState(height int64) sm.State {
 	if err != nil {
 		panic(err)
 	}
-	s := sm.LoadState(h.stateDBx)
-	lastHeightValidatorsChangedsm, err := sm.LoadConsensusParamsInfoLastHeightChanged(h.stateDBx, height)
+
+	lastHeightConsensusParamsChanged, err := sm.LoadConsensusParamsInfoLastHeightChanged(h.stateDBx, height)
 	if err != nil {
 		panic(err)
 	}
-	loadValidatorLastHeightChanged, err := sm.LoadValidatorLastHeightChanged(h.stateDBx, height)
-	if err != nil {
-		panic(err)
-	}
-	loadConsensusParamssm, err := sm.LoadConsensusParams(h.stateDBx, height)
+	consensusParamssm, err := sm.LoadConsensusParams(h.stateDBx, height+1)
 	if err != nil {
 		panic(err)
 	}
@@ -455,17 +459,18 @@ func (h *Handshaker) makeState(height int64) sm.State {
 		LastAllocation:                   nextblock.LastAllocation,
 		Validators:                       validators,
 		LastValidators:                   lastValidators,
-		LastHeightValidatorsChanged:      lastHeightValidatorsChangedsm,
-		ConsensusParams:                  loadConsensusParamssm,
-		LastHeightConsensusParamsChanged: loadValidatorLastHeightChanged,
+		LastHeightValidatorsChanged:      lastHeightValidatorsChanged,
+		ConsensusParams:                  consensusParamssm,
+		LastHeightConsensusParamsChanged: lastHeightConsensusParamsChanged,
 		LastResultsHash:                  nextblock.LastResultsHash,
 		LastAppHash:                      nextblock.LastAppHash,
 		LastTxsHashList:                  nextblock.LastTxsHashList,
 		LastMining:                       nextblock.LastMining,
-		ChainVersion:                     *block.ChainVersion,
 		LastQueueChains:                  nextblock.LastQueueChains,
 	}
-
+	if block.ChainVersion != nil {
+		s.ChainVersion = *block.ChainVersion
+	}
 	return s
 }
 

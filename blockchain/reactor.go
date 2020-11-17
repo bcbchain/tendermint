@@ -6,11 +6,11 @@ import (
 	"time"
 
 	"github.com/bcbchain/bclib/tendermint/go-amino"
+	cmn "github.com/bcbchain/bclib/tendermint/tmlibs/common"
+	"github.com/bcbchain/bclib/tendermint/tmlibs/log"
 	"github.com/bcbchain/tendermint/p2p"
 	sm "github.com/bcbchain/tendermint/state"
 	"github.com/bcbchain/tendermint/types"
-	cmn "github.com/bcbchain/bclib/tendermint/tmlibs/common"
-	"github.com/bcbchain/bclib/tendermint/tmlibs/log"
 )
 
 const (
@@ -274,7 +274,6 @@ FOR_LOOP:
 			for i := 0; i < 10; i++ {
 				// See if there are any blocks to sync.
 				first, second := bcR.pool.PeekTwoBlocks()
-				//bcR.Logger.Info("TrySync peeked", "first", first, "second", second)
 				if first == nil || second == nil {
 					// We need both to sync the first block.
 					break SYNC_LOOP

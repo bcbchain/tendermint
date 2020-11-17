@@ -37,9 +37,6 @@ github.com/aryann/difflib v0.0.0-20170710044230-e206f873d14a/go.mod h1:DAHtR1m6l
 github.com/aws/aws-lambda-go v1.13.3/go.mod h1:4UKl9IzQMoD+QF79YdCuzCwp8VbmG4VAQwij/eHl5CU=
 github.com/aws/aws-sdk-go v1.27.0/go.mod h1:KmX6BPdI08NWTb3/sm4ZGu5ShLoqVDhKgpiN924inxo=
 github.com/aws/aws-sdk-go-v2 v0.18.0/go.mod h1:JWVYvqSMppoMJC0x5wdwiImzgXTI9FuZwxzkQq9wy+g=
-github.com/bcbchain/bclib v0.0.0-20200529120820-171f2d2a0d85/go.mod h1:xYTfNCxGSL8tLOD+x1xtD7RpgdKVbdhJLq5SbWnYg8A=
-github.com/bcbchain/bclib v0.0.0-20200529124754-127c5783d369 h1:5uG4EtFnQbmu54WuARE0uS6cwiSJz3YDyYwwTuALl0A=
-github.com/bcbchain/bclib v0.0.0-20200529124754-127c5783d369/go.mod h1:3ThQpn+mqoqPgOwzd/LG2UEfcdsMO+KZiDRyGelNa7s=
 github.com/bcbchain/sdk v0.0.0-20200529121232-bb3d3dc8a9d6 h1:WaXlE3tRaLTb32iuKfv7+6h0YeUJy1HhSjBVwsO6W8k=
 github.com/bcbchain/sdk v0.0.0-20200529121232-bb3d3dc8a9d6/go.mod h1:IHRHbGn/BtzQiyFLrWZgB3ppB2K4yozE/KgNvaotHx4=
 github.com/beorn7/perks v0.0.0-20180321164747-3a771d992973/go.mod h1:Dwedo/Wpr24TaqPxmxbtue+5NUziq4I4S80YR8gNf3Q=

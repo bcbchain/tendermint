@@ -7,9 +7,9 @@ import (
 
 	"github.com/bcbchain/bclib/rpc/lib/types"
 
+	tmquery "github.com/bcbchain/bclib/tendermint/tmlibs/pubsub/query"
 	ctypes "github.com/bcbchain/tendermint/rpc/core/types"
 	tmtypes "github.com/bcbchain/tendermint/types"
-	tmquery "github.com/bcbchain/bclib/tendermint/tmlibs/pubsub/query"
 )
 
 // Subscribe for events via WebSocket.

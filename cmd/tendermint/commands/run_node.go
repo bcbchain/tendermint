@@ -4,9 +4,9 @@ import (
 	"fmt"
 	"github.com/bcbchain/tendermint/state"
 
-	"github.com/spf13/cobra"
 	nm "github.com/bcbchain/tendermint/node"
 	"github.com/bcbchain/tendermint/version"
+	"github.com/spf13/cobra"
 )
 
 // AddNodeFlags exposes some common configuration options on the command-line
@@ -57,7 +57,7 @@ func NewRunNodeCmd(nodeProvider nm.NodeProvider) *cobra.Command {
 			// Create & start node
 			n, err := nodeProvider(config, logger)
 			if err != nil {
-				return fmt.Errorf("Failed to create node: %v", err)
+				return fmt.Errorf("NewRunNode Failed to create node: %v", err)
 			}
 			state.NodeStop = n.OnStop
 

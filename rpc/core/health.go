@@ -1,9 +1,9 @@
 package core
 
 import (
-	"github.com/pkg/errors"
 	ctypes "github.com/bcbchain/tendermint/rpc/core/types"
 	"github.com/bcbchain/tendermint/version"
+	"github.com/pkg/errors"
 )
 
 // Get node health. Returns empty result (200 OK) on success, no response - in

@@ -7,11 +7,11 @@ import (
 	"testing"
 	"time"
 
+	"github.com/bcbchain/bclib/tendermint/go-crypto"
+	cmn "github.com/bcbchain/bclib/tendermint/tmlibs/common"
+	"github.com/bcbchain/tendermint/types"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	"github.com/bcbchain/bclib/tendermint/go-crypto"
-	"github.com/bcbchain/tendermint/types"
-	cmn "github.com/bcbchain/bclib/tendermint/tmlibs/common"
 )
 
 func TestGenLoadValidator(t *testing.T) {
@@ -49,7 +49,7 @@ func TestUnmarshalValidator(t *testing.T) {
 	// create some fixed values
 	privKey := crypto.GenPrivKeyEd25519()
 	pubKey := privKey.PubKey()
-	addr := pubKey.Address()
+	addr := pubKey.Address("")
 	pubArray := [32]byte(pubKey.(crypto.PubKeyEd25519))
 	pubBytes := pubArray[:]
 	privArray := [64]byte(privKey)
