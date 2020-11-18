@@ -424,11 +424,12 @@ func (h *Handshaker) replayBlock(state sm.State, height int64, proxyApp proxy.Ap
 func (h *Handshaker) makeState(height int64) sm.State {
 	h.logger.Info("making new state")
 
+	nextHeight := height + 1
 	block := h.store.LoadBlock(height)
-	nextblock := h.store.LoadBlock(height + 1)
+	nextBlock := h.store.LoadBlock(height + 1)
 	s := sm.LoadState(h.stateDBx)
 
-	lastHeightValidatorsChanged, err := sm.LoadValidatorLastHeightChanged(h.stateDBx, height)
+	lastHeightValidatorsChanged, err := sm.LoadValidatorLastHeightChanged(h.stateDBx, nextHeight)
 	if err != nil {
 		panic(err)
 	}
@@ -441,11 +442,11 @@ func (h *Handshaker) makeState(height int64) sm.State {
 		panic(err)
 	}
 
-	lastHeightConsensusParamsChanged, err := sm.LoadConsensusParamsInfoLastHeightChanged(h.stateDBx, height)
+	lastHeightConsensusParamsChanged, err := sm.LoadConsensusParamsInfoLastHeightChanged(h.stateDBx, nextHeight)
 	if err != nil {
 		panic(err)
 	}
-	consensusParamssm, err := sm.LoadConsensusParams(h.stateDBx, height+1)
+	consensusParams, err := sm.LoadConsensusParams(h.stateDBx, nextHeight)
 	if err != nil {
 		panic(err)
 	}
@@ -453,20 +454,20 @@ func (h *Handshaker) makeState(height int64) sm.State {
 		ChainID:                          block.ChainID,
 		LastBlockHeight:                  block.Height,
 		LastBlockTotalTx:                 block.TotalTxs,
-		LastBlockID:                      nextblock.LastBlockID,
+		LastBlockID:                      nextBlock.LastBlockID,
 		LastBlockTime:                    block.Time,
-		LastFee:                          nextblock.LastFee,
-		LastAllocation:                   nextblock.LastAllocation,
+		LastFee:                          nextBlock.LastFee,
+		LastAllocation:                   nextBlock.LastAllocation,
 		Validators:                       validators,
 		LastValidators:                   lastValidators,
 		LastHeightValidatorsChanged:      lastHeightValidatorsChanged,
-		ConsensusParams:                  consensusParamssm,
+		ConsensusParams:                  consensusParams,
 		LastHeightConsensusParamsChanged: lastHeightConsensusParamsChanged,
-		LastResultsHash:                  nextblock.LastResultsHash,
-		LastAppHash:                      nextblock.LastAppHash,
-		LastTxsHashList:                  nextblock.LastTxsHashList,
-		LastMining:                       nextblock.LastMining,
-		LastQueueChains:                  nextblock.LastQueueChains,
+		LastResultsHash:                  nextBlock.LastResultsHash,
+		LastAppHash:                      nextBlock.LastAppHash,
+		LastTxsHashList:                  nextBlock.LastTxsHashList,
+		LastMining:                       nextBlock.LastMining,
+		LastQueueChains:                  nextBlock.LastQueueChains,
 	}
 	if block.ChainVersion != nil {
 		s.ChainVersion = *block.ChainVersion
