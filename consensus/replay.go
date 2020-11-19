@@ -350,8 +350,19 @@ func (h *Handshaker) ReplayBlocks(state sm.State, appStateData []byte, appBlockH
 		if appBlockHeight == stateBlockHeight {
 			// We're good!
 			return appHash, checkAppHash(state, appHash)
+		} else if appBlockHeight == stateBlockHeight+1 {
+			// We ran Commit, but didn't save the state, so replayBlock with mock app
+			abciResponses, err := sm.LoadABCIResponses(h.stateDB, storeBlockHeight)
+			if err != nil {
+				return nil, err
+			}
+			mockApp := newMockProxyApp(appStateData, abciResponses)
+			h.logger.Info("Replay last block using mock app")
+			state, err = h.replayBlock(state, storeBlockHeight, mockApp)
+			return state.LastAppHash, err
 		} else {
-			return h.replayBlocks(state, proxyApp, appBlockHeight, storeBlockHeight, false)
+			cmn.PanicSanity("Should never happen")
+			//return h.replayBlocks(state, proxyApp, appBlockHeight, storeBlockHeight, false)
 		}
 	} else {
 		return h.replayBlocks(state, proxyApp, appBlockHeight, storeBlockHeight, true)

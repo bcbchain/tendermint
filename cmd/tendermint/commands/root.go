@@ -129,8 +129,8 @@ var RootCmd = &cobra.Command{
 		logger1 := log.NewTMLogger(config.LogDir(), "tmcore")
 		logger1.SetOutputAsync(true)
 		logger1.SetWithThreadID(true)
-		//logger1.AllowLevel("debug")
-		//logger1.SetOutputToScreen(true)
+		logger1.SetOutputToScreen(false)
+		logger1.AllowLevel(config.LogLevel)
 
 		logger = logger1
 
